@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zombie Escape Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Mali:wght@400;700&display=swap');
+
+        :root {
+            --bg-dark: #121212;
+            --accent-orange: #ff7b00;
+            --accent-green: #38b000;
+            --text-light: #ffffff;
+        }
+
+        body {
+            font-family: 'Mali', cursive;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            user-select: none;
+            background-image: radial-gradient(circle at center, #2a0845 0%, #000000 100%);
+        }
+
+        .game-container {
+            width: 900px;
+            max-width: 95vw;
+            height: 650px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            border: 4px solid var(--accent-orange);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(255, 123, 0, 0.3);
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Creepster', cursive;
+            color: var(--accent-orange);
+            font-size: 3rem;
+            margin: 0 0 10px 0;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 5px #000;
+        }
+
+        /* Helicopter Progress Track */
+        .progress-track {
+            width: 80%;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            position: relative;
+            margin-bottom: 20px;
+            border: 2px dashed #555;
+            display: flex;
+            align-items: center;
+        }
+
+        #helicopter {
+            font-size: 2.2rem;
+            position: absolute;
+            left: -10px;
+        }
+
+        #runner {
+            font-size: 1.8rem;
+            position: absolute;
+            right: 0%; 
+            transition: right 0.5s ease-in-out;
+            z-index: 10;
+        }
+
+        /* Game Layout */
+        .main-stage {
+            display: flex;
+            width: 100%;
+            flex-grow: 1;
+            gap: 20px;
+        }
+
+        /* UPDATED: Left panel takes up more space to keep words on one line */
+        .left-panel {
+            flex: 2; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+        /* UPDATED: Right panel is smaller */
+        .right-panel {
+            flex: 1; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 2px solid #333;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Picture Reference & Words */
+        #picture-hint {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 150px;
+            width: 150px;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.2));
+            animation: float 3s infinite ease-in-out;
+        }
+
+        #picture-hint img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        /* UPDATED: Force single line and slightly adjusted sizing */
+        #word-display {
+            font-size: 3rem;
+            letter-spacing: 12px;
+            font-weight: bold;
+            color: var(--accent-green);
+            text-shadow: 0 0 10px rgba(56, 176, 0, 0.5);
+            min-height: 60px;
+            white-space: nowrap; 
+        }
+
+        /* On-Screen Keyboard */
+        .keyboard {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .key {
+            background: #2b2b2b;
+            color: white;
+            border: 2px solid var(--accent-orange);
+            border-radius: 8px;
+            font-family: 'Mali', cursive;
+            font-size: 1.5rem;
+            font-weight: bold;
+            width: 45px;
+            height: 50px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .key:active { transform: scale(0.9); }
+        .key:disabled {
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* The Zombie Threat */
+        .zombie-warning {
+            font-family: 'Creepster', cursive;
+            color: #ff3333;
+            font-size: 1.5rem;
+            position: absolute;
+            top: 10px;
+            text-align: center;
+        }
+
+        #zombie {
+            font-size: 3rem;
+            position: absolute;
+            bottom: 20px;
+            transition: transform 0.3s ease-out;
+            transform-origin: bottom center;
+            filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.8));
+        }
+
+        /* Overlay Modals */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .overlay h2 {
+            font-family: 'Creepster', cursive;
+            font-size: 4rem;
+            margin: 0 0 20px 0;
+            color: var(--accent-orange);
+        }
+
+        .overlay button {
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            font-family: 'Mali', cursive;
+            font-weight: bold;
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 250px;
+        }
+
+        .overlay button:hover { filter: brightness(1.2); }
+        
+        .btn-easy { background: #38b000 !important; }
+        .btn-normal { background: #ff7b00 !important; }
+        .btn-hard { background: #ff3333 !important; }
+
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>Zombie Escape!</h1>
+
+        <div class="progress-track">
+            <div id="helicopter">🚁</div>
+            <div id="runner">🏃‍♂️</div>
+        </div>
+
+        <div class="main-stage">
+            <div class="left-panel">
+                <div id="picture-hint">
+                    </div>
+                <div id="word-display">_ _ _ _ _ _</div>
+                
+                <div class="keyboard" id="keyboard">
+                    </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="zombie-warning">
+                    MISTAKES<br>
+                    <span id="mistakes-count">0</span> / <span id="max-mistakes-display">6</span>
+                </div>
+                <div id="zombie">🧟‍♂️</div>
+            </div>
+        </div>
+
+        <div class="overlay" id="modal-difficulty" style="display: flex;">
+            <h2>Select Difficulty</h2>
+            <button class="btn-easy" onclick="startGame(6)">Easy (6 Mistakes)</button>
+            <button class="btn-normal" onclick="startGame(3)">Normal (3 Mistakes)</button>
+            <button class="btn-hard" onclick="startGame(1)">Hard (1 Mistake)</button>
+        </div>
+
+        <div class="overlay" id="modal-next">
+            <h2 style="color: var(--accent-green);">Word Cleared!</h2>
+            <p style="font-size: 1.5rem;">You are getting closer to the helicopter!</p>
+            <button onclick="nextWord()">Run to the next word!</button>
+        </div>
+
+        <div class="overlay" id="modal-gameover">
+            <h2 style="color: #ff3333;">THE ZOMBIE CAUGHT YOU!</h2>
+            <button onclick="resetGame()">Main Menu</button>
+        </div>
+
+        <div class="overlay" id="modal-win">
+            <h2 style="color: #00d4ff;">YOU ESCAPED!</h2>
+            <p style="font-size: 1.5rem;">The helicopter took you to safety.</p>
+            <button onclick="resetGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Game Vocabulary & Custom Images
+        let wordList = [
+            { word: "GHOST", hint: "<img src='ghost.png' alt='Ghost'>" },
+            { word: "CANDY", hint: "<img src='candy.png' alt='Candy'>" },
+            { word: "BAT", hint: "<img src='bat.png' alt='Bat'>" },
+            { word: "SPIDER", hint: "<img src='spider.png' alt='Spider'>" },
+            { word: "WITCH", hint: "<img src='witch.png' alt='Witch'>" },
+            { word: "MONSTER", hint: "<img src='monster.png' alt='Monster'>" },
+            { word: "JACKOLANTERN", hint: "<img src='jackolantern.png' alt='Jackolantern'>" },
+            { word: "MUMMY", hint: "<img src='mummy.png' alt='Mummy'>" },
+            { word: "VAMPIRE", hint: "<img src='vampire.png' alt='Vampire'>" },
+            { word: "SKELETON", hint: "<img src='skeleton.png' alt='Skeleton'>" }
+        ];
+
+        let currentWordIndex = 0;
+        let currentWord = "";
+        let guessedLetters = new Set();
+        let mistakes = 0;
+        let maxMistakes = 6; 
+
+        // DOM Elements
+        const wordDisplayEl = document.getElementById('word-display');
+        const pictureHintEl = document.getElementById('picture-hint');
+        const keyboardEl = document.getElementById('keyboard');
+        const zombieEl = document.getElementById('zombie');
+        const mistakesCountEl = document.getElementById('mistakes-count');
+        const maxMistakesDisplayEl = document.getElementById('max-mistakes-display');
+        const runnerEl = document.getElementById('runner');
+        
+        // Modals
+        const modalDifficulty = document.getElementById('modal-difficulty');
+        const modalNext = document.getElementById('modal-next');
+        const modalGameOver = document.getElementById('modal-gameover');
+        const modalWin = document.getElementById('modal-win');
+
+        // NEW: Shuffle Function
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Initialization
+        function initKeyboard() {
+            keyboardEl.innerHTML = '';
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+            alphabet.forEach(letter => {
+                const btn = document.createElement('button');
+                btn.classList.add('key');
+                btn.innerText = letter;
+                btn.id = `key-${letter}`;
+                
+                // Prevent touch/click conflicts
+                btn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    handleGuess(letter);
+                });
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    handleGuess(letter);
+                }, { passive: false });
+
+                keyboardEl.appendChild(btn);
+            });
+        }
+
+        function startGame(difficultyLimit) {
+            maxMistakes = difficultyLimit;
+            maxMistakesDisplayEl.innerText = maxMistakes;
+            modalDifficulty.style.display = 'none';
+            
+            // Shuffle the vocabulary at the start of every new game
+            shuffleArray(wordList);
+
+            // Reset progression variables
+            currentWordIndex = 0;
+            runnerEl.style.right = "0%";
+            runnerEl.innerText = "🏃‍♂️";
+            document.getElementById('helicopter').style.display = 'block';
+            
+            initKeyboard();
+            loadWord();
+        }
+
+        function loadWord() {
+            const data = wordList[currentWordIndex];
+            currentWord = data.word;
+            pictureHintEl.innerHTML = data.hint;
+            guessedLetters.clear();
+            mistakes = 0;
+            
+            // Clean up the keyboard visuals for the new word
+            document.querySelectorAll('.key').forEach(btn => {
+                btn.disabled = false;
+                btn.style.background = "#2b2b2b";
+                btn.style.borderColor = "var(--accent-orange)";
+                btn.style.color = "white";
+            });
+
+            updateDisplay();
+            updateZombie();
+        }
+
+        function updateDisplay() {
+            const displayStr = currentWord.split("").map(letter => 
+                guessedLetters.has(letter) ? letter : "_"
+            ).join(" ");
+            wordDisplayEl.innerText = displayStr;
+
+            // Update Progress Bar
+            const progressPercent = (currentWordIndex / wordList.length) * 90; 
+            runnerEl.style.right = `${progressPercent}%`;
+
+            // Check Win Condition for Current Word
+            if (!displayStr.includes("_")) {
+                setTimeout(() => handleWordWin(), 300);
+            }
+        }
+
+        function updateZombie() {
+            mistakesCountEl.innerText = mistakes;
+            
+            const scaleMultiplier = 3.6 / maxMistakes;
+            const moveMultiplier = -60 / maxMistakes;
+            
+            const scaleAmount = 1 + (mistakes * scaleMultiplier);
+            const yOffset = mistakes * moveMultiplier;
+            
+            zombieEl.style.transform = `translateY(${yOffset}px) scale(${scaleAmount})`;
+
+            if (mistakes >= maxMistakes) {
+                setTimeout(() => handleGameOver(), 300);
+            }
+        }
+
+        function handleGuess(letter) {
+            if (mistakes >= maxMistakes || guessedLetters.has(letter)) return;
+
+            guessedLetters.add(letter);
+            const btn = document.getElementById(`key-${letter}`);
+            if (btn) btn.disabled = true;
+
+            if (currentWord.includes(letter)) {
+                // Correct
+                btn.style.background = "var(--accent-green)";
+                btn.style.borderColor = "var(--accent-green)";
+                updateDisplay();
+            } else {
+                // Wrong
+                btn.style.background = "#ff3333";
+                btn.style.borderColor = "#ff3333";
+                btn.style.color = "#fff";
+                mistakes++;
+                updateZombie();
+            }
+        }
+
+        function handleWordWin() {
+            currentWordIndex++;
+            
+            if (currentWordIndex >= wordList.length) {
+                // Escaped!
+                runnerEl.style.right = "90%"; 
+                runnerEl.innerText = "🚁🏃‍♂️";
+                document.getElementById('helicopter').style.display = 'none';
+                modalWin.style.display = 'flex';
+            } else {
+                modalNext.style.display = 'flex';
+            }
+        }
+
+        function handleGameOver() {
+            modalGameOver.style.display = 'flex';
+        }
+
+        function nextWord() {
+            modalNext.style.display = 'none';
+            loadWord();
+        }
+
+        function resetGame() {
+            modalWin.style.display = 'none';
+            modalGameOver.style.display = 'none';
+            modalDifficulty.style.display = 'flex';
+        }
+
+        // Physical Keyboard Support
+        window.addEventListener('keydown', (e) => {
+            if (modalNext.style.display === 'flex' || 
+                modalGameOver.style.display === 'flex' || 
+                modalWin.style.display === 'flex' ||
+                modalDifficulty.style.display === 'flex') {
+                return;
+            }
+
+            const letter = e.key.toUpperCase();
+            if (/^[A-Z]$/.test(letter)) {
+                handleGuess(letter);
+            }
+        });
+
+    </script>
+</body>
+</html>
